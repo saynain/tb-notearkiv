@@ -51,6 +51,7 @@ export type Section = {
     rows: Row[];
 };
 export type Screen = {
+    archive?: { name: string; files: Array<{ path: string; name: string; kind: string }> };
     title: string;
     subtitle?: string;
     sections: Section[];

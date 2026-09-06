@@ -129,3 +129,8 @@ Run login-heavy suites sequentially and respect the existing auth rate limits.
 `POST workspace/choices` provides bounded searches for the complete work/project
 pickers. Its source enum is limited to project repertoire, rehearsal-plan works
 and board-linked projects; the existing search guards apply to each source.
+
+Project/work screens may include an `archive` manifest for native ZIP downloads.
+Project manifests use the existing `myFiles` list; archive manifests omit scores
+without score permission. Each download repeats the existing file authorization
+and logging (`download=1`); packaging happens on-device.
