@@ -37,6 +37,8 @@ for (const [token, headers] of [[null, {}], ['invalid', {}], [member + 'tampered
 assert.equal((await request(snapshotPath, member, 'GET', undefined, { Origin: 'https://evil.example' })).status, 403)
 const snapshot = await json('snapshot', member)
 const privileged = await json('snapshot', admin)
+assert.equal(snapshot.member.canSwitchEnvironment, false, 'ordinary members cannot enable development settings')
+assert.equal(privileged.member.canSwitchEnvironment, true, 'administrator capability comes from server permissions')
 assert.ok(snapshot.events.length > 0)
 assert.ok(snapshot.posts.length > 0)
 assert.ok(snapshot.scores.length > 0, 'Prepare future-dated local demo projects to exercise PDF access')

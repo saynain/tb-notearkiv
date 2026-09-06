@@ -76,7 +76,7 @@ export async function handleMobileAPI(request: Request, path: string): Promise<R
       const attendance = Object.fromEntries(responses.map((row) => [row.key, row.status]))
       return mobileJSON({
         version: 1,
-        member: { id: me.id, name: me.name, email: me.email, role: me.roleName, parts: me.parts.map((part) => part.nameNo) },
+        member: { id: me.id, name: me.name, email: me.email, role: me.roleName, canSwitchEnvironment: me.permissions.includes('*'), parts: me.parts.map((part) => part.nameNo) },
         calendarAvailable: calendar.configured && !calendar.error,
         events: visibleEvents.map((event) => ({
           id: event.occurrenceKey, title: event.title, date: Date.parse(event.start),
