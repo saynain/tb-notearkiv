@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
-import { emailOTP, magicLink } from 'better-auth/plugins'
+import { bearer, emailOTP, magicLink } from 'better-auth/plugins'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { env, waitUntil } from 'cloudflare:workers'
 import { eq } from 'drizzle-orm'
@@ -222,6 +222,9 @@ function buildAuth() {
       }),
     },
     plugins: [
+      // Native clients keep this signed, revocable session token in Keychain.
+      // Browser cookie authentication and the existing invitation gate are unchanged.
+      bearer({ requireSignature: true }),
       emailOTP({
         expiresIn: 5 * 60,
         allowedAttempts: 3,

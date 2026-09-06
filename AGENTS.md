@@ -43,6 +43,12 @@ Den skal ikke gjengi områdenes oversikter i miniatyr — se
 
 ## Arkitektur
 
+- Native iPhone API: `src/routes/api/mobile/v1/$.ts` → `src/server/mobile-api.ts`.
+  Signed bearer sessions use Better Auth (`requireSignature: true`); the native
+  API rejects ambient cookies. Reuse existing member/permission and file checks.
+  Contract and local integration test: `docs/mobile-api.md`. Never break v1 for
+  an installed app; no mobile API database or duplicate membership system.
+
 - `src/db/schema.ts` — hele datamodellen (Drizzle/SQLite)
 - `src/server/*.ts` — server functions (`createServerFn().validator(zod).handler()`); all tilgangskontroll skjer her via `requireMe()`/`requirePermission()` fra `access.ts` — aldri stol på klienten
 - `src/routes/api/` — server routes for filstrømming/opplasting (R2)
