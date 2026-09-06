@@ -18,6 +18,7 @@ import { boardScreen } from './mobile-board-screens'
 import { otherScreen } from './mobile-other-screens'
 import { runMobileAction } from './mobile-actions'
 import { mobileMentions, mentionQuery } from './mobile-mentions'
+import { mobileChoices, choiceQuery } from './mobile-choices'
 
 const textInput = z.object({ body: z.string().trim().min(1).max(20_000) }).strict()
 const responseInput = z.object({ status: z.enum(ATTENDANCE_STATUSES).nullable() }).strict()
@@ -58,6 +59,9 @@ export async function handleMobileAPI(request: Request, path: string): Promise<R
         mentions: z.array(z.object({ id:z.string().max(128), name:z.string().max(200) }).strict()).max(10).optional(),
       }).strict())
       return mobileJSON(await runMobileAction(input.operation, input.values, input.mentions))
+    }
+    if (path === 'workspace/choices' && request.method === 'POST') {
+      return mobileJSON(await mobileChoices(await mobileBody(request, choiceQuery)))
     }
     if (path === 'workspace/mentions' && request.method === 'POST') {
       return mobileJSON(await mobileMentions(await mobileBody(request, mentionQuery)))

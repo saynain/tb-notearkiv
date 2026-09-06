@@ -13,6 +13,7 @@ export type Field = {
     nullable?: boolean;
     options?: Choice[];
     hint?: string;
+    lookup?: 'project-works' | 'event-works' | 'board-projects';
 };
 export type Action = {
     id: string;

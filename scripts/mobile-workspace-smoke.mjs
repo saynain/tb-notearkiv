@@ -46,3 +46,19 @@ assert.equal((await action(admin,'board.updateTask',{id,title:name+' edited'})).
 assert.equal((await action(admin,'board.setTaskStatus',{id,status:'done'})).status,200)
 assert.equal((await action(admin,'board.deleteTask',{id})).status,200)
 console.log('PASS: explicit action allowlist, validation, denied permissions, profile and board task lifecycle')
+
+for (const source of ['event-works', 'board-projects']) {
+ const found = await call(admin, 'workspace/choices', {source, query: ''})
+ assert.equal(found.status, 200); assert.ok(found.data.length > 0)
+ const named = await call(admin, 'workspace/choices', {source, query: found.data[0].label})
+ assert.equal(named.status, 200); assert.ok(named.data.some(c => c.value === found.data[0].value))
+ assert.equal((await call(member, 'workspace/choices', {source, query: ''})).status, 403)
+}
+assert.equal((await call(admin, 'workspace/choices', {source: '__proto__', query: ''})).status, 400)
+const projects = await call(admin, 'workspace?screen=projects')
+const projectId = projects.data.sections.flatMap(s => s.rows).find(r => r.path?.startsWith('projects/')).path.split('/').at(-1)
+assert.equal((await call(admin, 'workspace/choices', {source:'project-works', query:'', projectId})).status, 200)
+for (const path of ['workspace?screen=archive&missing=audio&grade=3', 'workspace?screen=board/tasks&mine=true&status=open', 'workspace?screen=projects&sort=dato-stigende']) {
+ assert.equal((await call(admin,path)).status,200)
+}
+console.log('PASS: native work/project search, query validation, scoped permissions and filters')

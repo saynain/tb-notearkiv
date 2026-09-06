@@ -78,7 +78,7 @@ export async function memberScreen(path: string[], me: Me, query: URLSearchParam
         const actions = d.canManage ? [action('projects.updateProject', 'Rediger prosjekt', { id, ...valuesFor(projectFields, d.project), percussionNotes: d.project.percussionNotes ?? '' }, [...projectFields, field('percussionNotes', 'Samlet slagverksplan', 'multiline')]), action('projects.updateProject', d.project.isPublished ? 'Avpubliser' : 'Publiser', { id, isPublished: !d.project.isPublished }), remove('projects.deleteProject', 'Slett prosjekt', { id })] : [];
         if (d.canManage) {
             const picker = await projects.searchWorksForPicker({ data: { excludeProjectId: id } });
-            actions.unshift(action('projects.addWorkToProject', 'Legg til verk', { projectId: id }, [select('workId', 'Verk', options(picker.works, w => w.id, w => w.title)), field('note', 'Merknad')]));
+            actions.unshift(action('projects.addWorkToProject', 'Legg til verk', { projectId: id }, [{ ...select('workId', 'Verk', options(picker.works, w => w.id, w => w.title)), lookup: 'project-works' }, field('note', 'Merknad')]));
         }
         return { title: d.project.name, sections, actions };
     }

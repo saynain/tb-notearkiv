@@ -42,7 +42,7 @@ export async function otherScreen(path: string[], me: Me, query: URLSearchParams
         const actions = [action('event-meta.setMyAttendance', 'Ditt oppmøte', { occurrenceKey: id, status: d.myAttendance?.status ?? null, comment: d.myAttendance?.comment ?? '' }, [select('status', 'Svar', attendanceOptions, true), field('comment', 'Merknad', 'multiline')])];
         if (d.canManagePlan) {
             const w = await events.searchWorksForEvent({ data: {} });
-            actions.push(action('event-meta.addSetlistItem', 'Legg til i øvingsplan', { occurrenceKey: id, workId: null }, [select('workId', 'Verk (eller skriv egen tittel)', options(w.works, w => w.id, w => w.title), true), field('customTitle', 'Egen tittel'), field('note', 'Merknad', 'multiline')]), action('event-meta.setLinkedProject', 'Koble til prosjekt', { occurrenceKey: id, projectId: d.linkedProject?.id ?? null }, [select('projectId', 'Prosjekt', options(d.projectOptions, p => p.id, p => p.name), true)]));
+            actions.push(action('event-meta.addSetlistItem', 'Legg til i øvingsplan', { occurrenceKey: id, workId: null }, [{ ...select('workId', 'Verk (eller skriv egen tittel)', options(w.works, w => w.id, w => w.title), true), lookup: 'event-works' }, field('customTitle', 'Egen tittel'), field('note', 'Merknad', 'multiline')]), action('event-meta.setLinkedProject', 'Koble til prosjekt', { occurrenceKey: id, projectId: d.linkedProject?.id ?? null }, [select('projectId', 'Prosjekt', options(d.projectOptions, p => p.id, p => p.name), true)]));
         }
         return { title: d.event?.title ?? d.snapshot?.summary ?? 'Aktivitet', sections, actions };
     }

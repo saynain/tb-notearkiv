@@ -125,3 +125,7 @@ member/admin navigation and checks action validation and permissions;
 `node scripts/mobile-upload-smoke.mjs` uploads and deletes synthetic PDF,
 board-document and post-image fixtures and checks access and download bytes.
 Run login-heavy suites sequentially and respect the existing auth rate limits.
+
+`POST workspace/choices` provides bounded searches for the complete work/project
+pickers. Its source enum is limited to project repertoire, rehearsal-plan works
+and board-linked projects; the existing search guards apply to each source.
