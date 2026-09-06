@@ -67,6 +67,20 @@ export function mobileFailure(error: unknown): Response {
   if (error instanceof z.ZodError) {
     return mobileJSON({ error: { code: 'invalid_input', message: 'Kontroller feltene og prøv igjen.' } }, 400)
   }
+  if (error instanceof Error) {
+    // TanStack wraps Standard Schema issues in a plain Error. Classify the
+    // shape, but never return its contents (which can contain input values).
+    try {
+      const issues: unknown = JSON.parse(error.message)
+      if (Array.isArray(issues) && issues.length > 0 && issues.every(issue =>
+        issue && typeof issue === 'object' && typeof issue.message === 'string' && Array.isArray(issue.path))) {
+        return mobileJSON({ error: { code: 'invalid_input', message: 'Kontroller feltene og prøv igjen.' } }, 400)
+      }
+    } catch { /* Not a validation error. */ }
+    if (/^(Du mangler tilgangen|Du har ikke tilgang|Gruppelederområdet er)/.test(error.message)) {
+      return mobileJSON({ error: { code: 'forbidden', message: 'Du har ikke tilgang til denne handlingen.' } }, 403)
+    }
+  }
   // Never return stack traces, database errors or token-bearing request data.
   console.error('[mobile-api] request failed', error instanceof Error ? error.name : 'UnknownError')
   return mobileJSON({ error: { code: 'server_error', message: 'Kunne ikke fullføre. Prøv igjen.' } }, 500)

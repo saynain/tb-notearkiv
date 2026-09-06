@@ -30,4 +30,10 @@ describe('native API transport boundary', () => {
     expect(await response.text()).not.toContain('private content')
     expect(mobileFailure(new Error('Fant ikke beskjeden')).status).toBe(404)
   })
+  it('classifies Standard Schema validation without returning submitted values', async () => {
+    const response = mobileFailure(new Error(JSON.stringify([{ message: 'private submitted input', path: ['password'], code: 'too_small' }])))
+    expect(response.status).toBe(400)
+    expect(await response.text()).not.toContain('private submitted input')
+    expect(mobileFailure(new Error('Du mangler tilgangen «board.manage»')).status).toBe(403)
+  })
 })

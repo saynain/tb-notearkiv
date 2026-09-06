@@ -42,7 +42,7 @@ expired and revoked sessions receive a JSON 401 on the native API.
 | PUT | `events/{occurrenceKey}/attendance` | `{status: "attending" | "not_attending" | "unsure" | null}`; existing event identity, own member only |
 | POST | `posts` | `{body}` creates an ordinary plain-text draft; returns `{id}` |
 | POST | `posts/{id}/publish` | `{}` publishes the caller's draft using existing checks; no bulk announcement email |
-| GET | `posts/{id}` | readable post and comments, with mentions resolved and markdown converted to plain text |
+| GET | `posts/{id}` | readable post and comments, with resolved mentions, plain text fallback and optional native Markdown source |
 | POST | `posts/{id}/like` | `{}` toggles the caller's reaction; returns `{mine, count}`; do not retry automatically |
 | POST | `posts/{id}/comments` | `{body}` adds a comment with existing visibility and mention validation |
 
@@ -57,8 +57,8 @@ mention notifications still follow the server's normal rules.
 
 Returned file/image paths use `/api/files/{id}` and `/api/post-images/{id}`.
 These existing routes repeat authorization before streaming private R2 content.
-The app never gets an R2 bucket URL or Cloudflare credentials. Audio and archive
-browsing are not yet exposed in the native UI.
+The app never gets an R2 bucket URL or Cloudflare credentials. Native archive and project screens also expose authorized audio, documents and
+reference links.
 
 JSON responses use `Cache-Control: private, no-store`. Error bodies have
 `{error: {code, message}}`; internal database errors and stack traces are omitted.
@@ -92,3 +92,36 @@ synthetic posts/comments only in the local fixture database.
 
 Also run `pnpm exec tsc --noEmit`, `pnpm test`, and `pnpm run build`. Deployment
 continues through the existing staging and production GitHub Actions workflows.
+
+## Native workspace contract
+
+`GET workspace?screen=<path>` returns a typed `Screen` from `mobile-ui.ts`:
+sections of identifiable rows, permitted navigation/file links and action forms.
+Paths cover profile, members, projects/shares, archive, calendar/event details,
+posts, board tasks/projects/meetings/documents/chat, group leaders, settings and
+download logs. Search/filter query parameters are validated by existing readers.
+SwiftUI renders this contract directly; no HTML, script or embedded browser is
+returned. Optional additive fields preserve the installed v1 member app.
+
+`POST workspace/action` accepts `{operation, values, mentions?}`. `mobile-actions.ts`
+uses an explicit Map of existing server functions, each retaining its own validator
+and permission guard. Unknown operations return 404, including prototype names.
+Validation failures return sanitized 400 responses. No arbitrary export or module
+name can be selected. Responses expose only intentional user-facing outcomes;
+new substitute links are displayed once for explicit sharing.
+
+`POST workspace/mentions` queries the existing audience/channel-scoped mention
+search. Editable mention drafts use display names and convert chosen mentions
+back into validated markers before saving. Chat screens include an optional
+read action; the client marks the channel read only while it is visible.
+
+Files use the existing guarded `/api/upload/{start,part,complete,abort}`,
+`/api/post-images/upload` and `/api/board-files/upload` protocols. PDF splitting
+happens on-device and uploads each resulting file with an explicit part ID.
+No changes to those upload routes or schema are required.
+
+Additional local checks: `node scripts/mobile-workspace-smoke.mjs` traverses
+member/admin navigation and checks action validation and permissions;
+`node scripts/mobile-upload-smoke.mjs` uploads and deletes synthetic PDF,
+board-document and post-image fixtures and checks access and download bytes.
+Run login-heavy suites sequentially and respect the existing auth rate limits.

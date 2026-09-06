@@ -13,6 +13,11 @@ import { loadCalendar } from './calendar-feed'
 import { setMyAttendance } from './event-meta'
 import { addComment, createPost, getPost, listPosts, publishPost, toggleReaction, type PostListItem } from './posts'
 import { getHome } from './projects'
+import { memberScreen } from './mobile-member-screens'
+import { boardScreen } from './mobile-board-screens'
+import { otherScreen } from './mobile-other-screens'
+import { runMobileAction } from './mobile-actions'
+import { mobileMentions, mentionQuery } from './mobile-mentions'
 
 const textInput = z.object({ body: z.string().trim().min(1).max(20_000) }).strict()
 const responseInput = z.object({ status: z.enum(ATTENDANCE_STATUSES).nullable() }).strict()
@@ -37,6 +42,26 @@ export async function handleMobileAPI(request: Request, path: string): Promise<R
     const me = await currentUser()
     if (!me) throw new MobileError(401, 'session_required', 'Økten er utløpt, eller medlemskapet er ikke aktivt.')
     const segments = path.split('/').filter(Boolean)
+
+    if (path === 'workspace' && request.method === 'GET') {
+      const query = new URL(request.url).searchParams
+      const screenPath = (query.get('screen') ?? 'more').split('/').filter(Boolean)
+      const screen = await memberScreen(screenPath, me, query)
+        ?? await boardScreen(screenPath, me, query)
+        ?? await otherScreen(screenPath, me, query)
+      if (!screen) throw new MobileError(404, 'not_found', 'Siden finnes ikke.')
+      return mobileJSON(screen)
+    }
+    if (path === 'workspace/action' && request.method === 'POST') {
+      const input = await mobileBody(request, z.object({
+        operation: z.string().min(1).max(100), values: z.record(z.string(), z.unknown()),
+        mentions: z.array(z.object({ id:z.string().max(128), name:z.string().max(200) }).strict()).max(10).optional(),
+      }).strict())
+      return mobileJSON(await runMobileAction(input.operation, input.values, input.mentions))
+    }
+    if (path === 'workspace/mentions' && request.method === 'POST') {
+      return mobileJSON(await mobileMentions(await mobileBody(request, mentionQuery)))
+    }
 
     if (request.method === 'GET' && path === 'snapshot') {
       const [calendar, wall, music] = await Promise.all([loadCalendar(Date.now()), listPosts(), getHome()])
@@ -84,7 +109,7 @@ export async function handleMobileAPI(request: Request, path: string): Promise<R
       if (segments.length === 2 && request.method === 'GET') {
         const result = await getPost({ data: { id } })
         return mobileJSON({
-          post: { ...mobilePost(result.post), body: mentionPlainText(postPlainText(result.post.body, result.post.format), result.post.mentions) },
+          post: { ...mobilePost(result.post), body: mentionPlainText(postPlainText(result.post.body, result.post.format), result.post.mentions), ...(result.post.format === 'markdown' ? { markdown: mentionPlainText(result.post.body, result.post.mentions) } : {}) },
           comments: result.comments.map((comment) => ({ id: comment.id, author: comment.author.name, body: mentionPlainText(comment.body, comment.mentions), date: comment.createdAt })),
         })
       }
